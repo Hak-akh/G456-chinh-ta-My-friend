@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Game: Adam's Story</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #5e5ce6; /* A vibrant purple */
+            --primary-hover: #7873f5;
+            /* Lighter, softer background gradient */
+            --background-gradient: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            --container-bg: rgba(255, 255, 255, 0.95);
+            --text-color: #3d3d3d;
+            --light-text: #6c757d;
+            --success-color: #20c997;
+            --error-color: #e63946;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Poppins', sans-serif;
+            background: var(--background-gradient);
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            overflow-x: hidden;
+            color: var(--text-color);
+        }
+        #game-container {
+            text-align: center;
+            background: var(--container-bg);
+            padding: 25px 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 650px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+        }
+        h1 {
+            font-size: clamp(24px, 5vw, 32px);
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+        p {
+            font-size: clamp(15px, 4vw, 17px);
+            line-height: 1.6;
+            margin-top: 0;
+        }
+        .instruction-vi {
+            font-size: clamp(13px, 3.5vw, 15px);
+            color: var(--light-text);
+            margin-top: 4px;
+            display: block;
+        }
+        .instruction-extra {
+            font-size: clamp(13px, 3.5vw, 14px);
+            color: var(--error-color);
+            font-weight: 600;
+            margin-top: 4px;
+            display: block;
+        }
+        input[type="text"] {
+            padding: 12px 18px;
+            font-size: clamp(14px, 4vw, 16px);
+            width: 100%;
+            max-width: 450px;
+            margin: 15px 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            border: 2px solid #dfe6e9;
+            border-radius: 10px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px rgba(94, 92, 230, 0.25);
+        }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        button {
+            padding: 12px 25px;
+            font-size: clamp(14px, 4vw, 16px);
+            cursor: pointer;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            touch-action: manipulation;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(94, 92, 230, 0.2);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        #hint {
+            color: var(--light-text);
+            font-style: italic;
+            margin-top: 15px;
+            font-size: clamp(13px, 3.5vw, 15px);
+            user-select: none;
+            line-height: 1.5;
+            min-height: 22px;
+        }
+        #completion, #result {
+            font-size: clamp(15px, 4vw, 18px);
+            font-weight: 600;
+            margin-top: 15px;
+            min-height: 27px;
+        }
+        #result.correct {
+            color: var(--success-color);
+        }
+        #result.incorrect {
+            color: var(--error-color);
+        }
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Spelling Game: Adam's Story</h1>
+        <p>Click Start to begin the game!<span class="instruction-vi">Nhấn Bắt đầu để chơi!</span></p>
+        <button onclick="startGame()">Start</button>
+    </div>
+
+    <script>
+        // Data for the game
+        const sentences = [
+            { english: "My name is Adam.", vietnamese: "Tên tôi là Adam." },
+            { english: "I am seven years old.", vietnamese: "Tôi bảy tuổi." },
+            { english: "I have many friends.", vietnamese: "Tôi có nhiều bạn." },
+            { english: "Most of my friends are my age.", vietnamese: "Hầu hết bạn bè của tôi đều bằng tuổi tôi." },
+            { english: "Some of them are older than me.", vietnamese: "Một vài người trong số họ lớn tuổi hơn tôi." },
+            { english: "Some of them are younger than me.", vietnamese: "Một vài người trong số họ nhỏ tuổi hơn tôi." },
+            { english: "My best friend is Harry.", vietnamese: "Bạn thân nhất của tôi là Harry." },
+            { english: "He is seven.", vietnamese: "Cậu ấy bảy tuổi." },
+            { english: "He lives near me.", vietnamese: "Cậu ấy sống gần tôi." },
+            { english: "We go to the same English center and are in the same class.", vietnamese: "Chúng tôi học cùng một trung tâm tiếng Anh và cùng một lớp." },
+            { english: "Harry helps me with my maths homework.", vietnamese: "Harry giúp tôi làm bài tập toán." },
+            { english: "I help him with his English homework.", vietnamese: "Tôi giúp cậu ấy làm bài tập tiếng Anh." },
+            { english: "I can spell better than he can.", vietnamese: "Tôi có thể đánh vần tốt hơn cậu ấy." },
+            { english: "Harry is 105 centimetres tall.", vietnamese: "Harry cao 105 centimet." },
+            { english: "He is taller than me.", vietnamese: "Cậu ấy cao hơn tôi." },
+            { english: "I am only 103 centimetres tall.", vietnamese: "Tôi chỉ cao 103 centimet." },
+            { english: "He weighs 30 kilograms and is quite fat.", vietnamese: "Cậu ấy nặng 30 kilôgam và khá mập." },
+            { english: "He doesn’t like sport so he doesn’t get much exercise.", vietnamese: "Cậu ấy không thích thể thao nên không tập thể dục nhiều." },
+            { english: "We both have black hair and brown eyes.", vietnamese: "Cả hai chúng tôi đều có tóc đen và mắt nâu." },
+            { english: "Harry’s hair is longer than mine.", vietnamese: "Tóc của Harry dài hơn của tôi." },
+            { english: "I like sport, and play football or go swimming every day.", vietnamese: "Tôi thích thể thao, và chơi bóng đá hoặc đi bơi mỗi ngày." },
+            { english: "Every evening Harry and I play computer games.", vietnamese: "Mỗi buổi tối Harry và tôi chơi game trên máy tính." },
+            { english: "Sometimes we play on my computer.", vietnamese: "Thỉnh thoảng chúng tôi chơi trên máy tính của tôi." },
+            { english: "Sometimes we play on his computer.", vietnamese: "Thỉnh thoảng chúng tôi chơi trên máy tính của cậu ấy." },
+            { english: "Harry usually wins!", vietnamese: "Harry thường chiến thắng!" }
+        ];
+        let currentSentenceIndex = 0;
+        let completedCount = 0;
+        let isPlaying = false;
+        let autoPlayInterval;
+        let wrongAttempts = 0;
+        const TOTAL_SENTENCES = sentences.length;
+
+        // More encouraging celebration effect
+        function showCelebrationEffect() {
+            const gameContainer = document.getElementById('game-container');
+            const colors = ['#5e5ce6', '#20c997', '#ffc107', '#fd7e14', '#e84393'];
+
+            for (let i = 0; i < 60; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                gameContainer.appendChild(particle);
+
+                const size = Math.floor(Math.random() * 15 + 5);
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+
+                if (Math.random() > 0.5) {
+                    particle.style.clipPath = 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)';
+                } else {
+                    particle.style.borderRadius = '50%';
+                }
+
+                const destinationX = (Math.random() - 0.5) * 350;
+                const destinationY = (Math.random() - 0.5) * 350;
+                const rotation = Math.random() * 520;
+                const delay = Math.random() * 200;
+
+                particle.style.left = '50%';
+                particle.style.top = '50%';
+                
+                const animation = particle.animate([
+                    { transform: 'translate(-50%, -50%) scale(1)', opacity: 1 },
+                    { transform: `translate(calc(-50% + ${destinationX}px), calc(-50% + ${destinationY}px)) scale(0) rotateZ(${rotation}deg)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 1000 + 1000,
+                    easing: 'cubic-bezier(0.1, .9, .57, 1)',
+                    delay: delay
+                });
+
+                animation.onfinish = () => {
+                    particle.remove();
+                };
+            }
+        }
+
+        function playSentence() {
+            if (!isPlaying && sentences[currentSentenceIndex]) {
+                isPlaying = true;
+                const utterance = new SpeechSynthesisUtterance(sentences[currentSentenceIndex].english);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                utterance.onend = () => {
+                    isPlaying = false;
+                };
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function startAutoPlay() {
+            if (autoPlayInterval) clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(() => {
+                if (!isPlaying) {
+                    playSentence();
+                }
+            }, 5000);
+        }
+
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+            }
+        }
+
+        function checkAnswer() {
+            // Get user input and trim whitespace, but keep everything else
+            const userInput = document.getElementById('userInput').value.trim();
+            const result = document.getElementById('result');
+            const currentSentence = sentences[currentSentenceIndex].english;
+
+            // Stricter check: must match exactly including case and punctuation
+            if (userInput === currentSentence) {
+                stopAutoPlay();
+                result.textContent = "Correct!";
+                result.className = 'correct';
+                
+                // NEW: Trigger celebration effect twice for more excitement
+                showCelebrationEffect();
+                setTimeout(showCelebrationEffect, 250); // Second burst after a short delay
+
+                // NEW: Only award points if correct on the 1st or 2nd try
+                if (wrongAttempts < 2) {
+                    completedCount++;
+                }
+                
+                wrongAttempts = 0;
+                
+                setTimeout(() => {
+                    currentSentenceIndex++;
+                    if (currentSentenceIndex >= TOTAL_SENTENCES) {
+                        document.getElementById('game-container').innerHTML = `<h1>Congratulations!</h1><p>You have completed all sentences with a score of ${completedCount}/${TOTAL_SENTENCES}!</p><button onclick="resetGame()">Play Again</button>`;
+                    } else {
+                        updateGameScreen();
+                        playSentence();
+                        startAutoPlay();
+                    }
+                }, 2000);
+            } else {
+                wrongAttempts++;
+                result.textContent = `Incorrect, try again! (${3 - wrongAttempts} attempts left)`;
+                result.className = 'incorrect';
+                if (wrongAttempts >= 3) {
+                    stopAutoPlay();
+                    wrongAttempts = 0;
+                    result.textContent = "Moving to the next sentence...";
+                    setTimeout(() => {
+                        currentSentenceIndex++;
+                        if (currentSentenceIndex >= TOTAL_SENTENCES) {
+                            document.getElementById('game-container').innerHTML = `<h1>Game Over!</h1><p>You scored ${completedCount} out of ${TOTAL_SENTENCES} sentences.</p><button onclick="resetGame()">Play Again</button>`;
+                        } else {
+                            updateGameScreen();
+                            playSentence();
+                            startAutoPlay();
+                        }
+                    }, 2000);
+                }
+            }
+        }
+
+        function updateGameScreen() {
+            if (document.getElementById('userInput')) {
+                document.getElementById('userInput').value = '';
+                document.getElementById('hint').textContent = '';
+                document.getElementById('result').textContent = '';
+                document.getElementById('completion').textContent = `Score: ${completedCount}/${TOTAL_SENTENCES}`;
+            }
+        }
+
+        function showHint() {
+            const hintData = sentences[currentSentenceIndex];
+            document.getElementById('hint').innerHTML = `Hint: ${hintData.english}<br>(${hintData.vietnamese})`;
+        }
+
+        function startGame() {
+            wrongAttempts = 0;
+            document.getElementById('game-container').innerHTML = `
+                <h1>Spelling Master</h1>
+                <p>Listen carefully and type the sentence you hear.
+                   <span class="instruction-vi">Hãy lắng nghe cẩn thận và gõ lại câu bạn nghe được.</span>
+                   <span class="instruction-extra">Lưu ý: Phải viết hoa và có dấu câu chính xác.</span>
+                </p>
+                <input type="text" id="userInput" placeholder="Type the sentence here...">
+                <div class="button-group">
+                    <button onclick="playSentence()">&#9658; Play Sound</button>
+                    <button onclick="checkAnswer()">Check</button>
+                    <button onclick="showHint()">Hint</button>
+                    <button onclick="resetGame()">Reset Game</button>
+                </div>
+                <p id="completion">Score: ${completedCount}/${TOTAL_SENTENCES}</p>
+                <p id="hint"></p>
+                <p id="result"></p>
+            `;
+            document.getElementById('userInput').addEventListener('keypress', handleKeyPress);
+            playSentence();
+            startAutoPlay();
+        }
+
+        function resetGame() {
+            stopAutoPlay();
+            currentSentenceIndex = 0;
+            completedCount = 0;
+            wrongAttempts = 0;
+            speechSynthesis.cancel();
+            isPlaying = false;
+            document.getElementById('game-container').innerHTML = `
+                <h1>Spelling Game: Adam's Story</h1>
+                <p>Click Start to begin the game!<span class="instruction-vi">Nhấn Bắt đầu để chơi!</span></p>
+                <button onclick="startGame()">Start</button>
+            `;
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); 
+                checkAnswer();
+            }
+        }
+    </script>
+</body>
+</html>
